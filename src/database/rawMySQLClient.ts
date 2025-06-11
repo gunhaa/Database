@@ -110,7 +110,7 @@ export default class RawMySQLClient implements database {
     // 0,1,2 length
     header.writeUIntLE(payload.length, 0, 3);
 
-    console.log("전송시 sequenceId는 3이여야한다 : ", sequenceId + 1);
+    // console.log("전송시 sequenceId는 3이여야한다 : ", sequenceId + 1);
     // 3 sequenceId
     header.writeUInt8(sequenceId + 1, 3);
 
@@ -135,6 +135,7 @@ export default class RawMySQLClient implements database {
     offset: number
   ) {
     console.log("parseAuthSwitch의 Data: ", data);
+    console.log("현재 offset은 5여야 한다: " + offset);
     let pluginEnd = offset;
     while (data[pluginEnd] !== 0x00) {
       pluginEnd++;
@@ -152,7 +153,7 @@ export default class RawMySQLClient implements database {
     // 2c 00 00 02 fe
     // 63 61 63 68 69 6e 67 5f 73 68 61 32 5f 70 61 73 73 77 6f 72 64 00
     // 22 7d 17 35 5b 38 1f 39 salt1
-    // 61 filler
+    // 61 filler(x)
     // 67 36 19 51 07 44 22 05 16 3a 57 salt2
     // 00 마지막은 널문자
     //const salt2 = data.slice(offset, offset + 11);
@@ -283,7 +284,7 @@ export default class RawMySQLClient implements database {
 
     const filler = Buffer.alloc(23, 0);
 
-    const unameBuf = Buffer.from(parsedHandshake.username + "\0");
+    const unameBuf = Buffer.from(parsedHandshake.username + "\0", "utf8");
 
     // caching_sha2_password password scramble
     // 1단계: SHA256(password)
