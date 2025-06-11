@@ -31,6 +31,7 @@ export default class RawMySQLClient implements database {
 
     client.on("data", (data) => {
       console.log("응답 도착:", data);
+      console.log("응답 전문: " + data.toString("hex"));
       // 0~3: 패킷 헤더
       const payloadLength = data.readUIntLE(0, 3); // 보통 0x4a
       const sequenceId = data.readUInt8(3);
@@ -95,37 +96,45 @@ export default class RawMySQLClient implements database {
     //   this.sha256(Buffer.from(String(password), "utf8")).toString("hex")
     // );
 
-    const passwordSha1 = this.sha256(Buffer.from(password));
+    const passwordSha1 = this.sha256(Buffer.from(password, "utf8"));
     const passwordSha2 = this.sha256(passwordSha1);
     const passwordSha3 = this.sha256(
       Buffer.concat([passwordSha2, parsedAuthSwitchRequest.salt])
     );
 
-    const scrambled = Buffer.alloc(passwordSha1.length);
-    for (let i = 0; i < passwordSha1.length; i++) {
-      scrambled[i] = passwordSha1[i] ^ passwordSha3[i];
-    }
+    const scrambled = this.xorBuffers(passwordSha1, passwordSha3);
 
     const payload = Buffer.concat([Buffer.from([scrambled.length]), scrambled]);
 
     const header = Buffer.alloc(4);
     // 0,1,2 length
     header.writeUIntLE(payload.length, 0, 3);
+
+    console.log("전송시 sequenceId는 3이여야한다 : ", sequenceId + 1);
     // 3 sequenceId
     header.writeUInt8(sequenceId + 1, 3);
 
     console.log(
-      "전송 패킷 2단계 인증(hex):",
+      "전송 패킷 2단계 인증 결과 MySQL에 전송: ",
       Buffer.concat([header, payload]).toString("hex")
     );
 
     return Buffer.concat([header, payload]);
   }
 
+  /*
+    1 byte       : 0xFE (Auth Switch Request)
+    N bytes      : auth_plugin_name (null-terminated)
+    8 bytes      : first part of salt
+    (X)1 byte       : filler (0x00) - 삭제됬음
+    12 bytes     : second part of salt
+    1 byte       : null terminator (optional, sometimes not sent)
+  */
   private parseAuthSwitchRequest(
     data: Buffer<ArrayBufferLike>,
     offset: number
   ) {
+    console.log("parseAuthSwitch의 Data: ", data);
     let pluginEnd = offset;
     while (data[pluginEnd] !== 0x00) {
       pluginEnd++;
@@ -133,7 +142,27 @@ export default class RawMySQLClient implements database {
     const authPluginName = data.toString("utf8", offset, pluginEnd);
     offset = pluginEnd + 1;
 
-    const salt = data.slice(offset, offset + 20); // 남은 전체는 salt (20 bytes), 널문자 짤라야함
+    //const salt1 = data.slice(offset, offset + 8);
+    // offset += 8;
+    // console.log("salt1: "+ salt1.toString("hex"));
+
+    // Filler (1 byte)
+    // offset += 1;
+
+    // 2c 00 00 02 fe
+    // 63 61 63 68 69 6e 67 5f 73 68 61 32 5f 70 61 73 73 77 6f 72 64 00
+    // 22 7d 17 35 5b 38 1f 39 salt1
+    // 61 filler
+    // 67 36 19 51 07 44 22 05 16 3a 57 salt2
+    // 00 마지막은 널문자
+    //const salt2 = data.slice(offset, offset + 11);
+    //console.log("salt2: "+ salt2.toString("hex"));
+
+    //const salt = Buffer.concat([salt1, salt2]);
+    //console.log("salt: "+ salt.toString("hex"));
+
+    const salt = data.slice(offset, offset + 20);
+    console.log("salt: ", salt);
 
     return { authPluginName, salt };
   }
@@ -157,6 +186,8 @@ export default class RawMySQLClient implements database {
     offset += 4;
 
     // 4. Auth plugin data part 1 (8 bytes)
+    // 의미 없음
+    // 첫 요청은 비밀번호를 검사하지 않는다
     const salt1 = data.slice(offset, offset + 8);
     offset += 8;
 
