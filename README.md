@@ -1,7 +1,7 @@
 
 - https://dev.mysql.com/doc/dev/mysql-server/8.4.4/page_protocol_connection_phase.html
   - https://dev.mysql.com/doc/dev/mysql-server/8.4.4/page_caching_sha2_authentication_exchanges.html
-
+- https://dev.mysql.com/doc/dev/mysql-server/8.4.4/page_protocol_connection_phase_packets_protocol_auth_switch_response.html
 ```plaintext
 Debugger attached.
 Connected to MySQL server on port 3306
@@ -28,3 +28,23 @@ salt:  <Buffer 5d 2e 75 4d 7f 1e 42 0f 56 6c 16 15 7b 48 18 44 48 2f 4c 05>
 전송 패킷 2단계 인증 결과 MySQL에 전송:  2100000320dffd71e045e35f0cf0f928fc037be9667cf38f77caa0541997fa39bcdac77aef
 추가 인증 전송 완료
 ```
+
+- 흐름
+  - Scramble - XOR(SHA256(password), SHA256(SHA256(SHA256(password)), salt))
+
+```plaintext
+[서버] Handshake  (salt1) , sequenceId: 00
+   ↓
+[클라이언트] LoginPacket (임시 scramble, salt1로 계산, 캐시용, 맞든 틀리든 의미X) ,sequenceId: 01
+   ↓
+[서버] AuthSwitchRequest (salt2 제공), sequenceId: 02
+   ↓
+[클라이언트] AuthSwitchResponse (scramble2: salt2로 계산), sequenceId: 03
+   ↓
+[서버] 인증결과 판단, sequenceId: 04
+```
+
+- handshake 프로토콜은
+  - [전체길이]:3byte
+  - [상태]:1byte
+  - 

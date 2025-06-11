@@ -141,6 +141,7 @@ export default class RawMySQLClient implements database {
       pluginEnd++;
     }
     const authPluginName = data.toString("utf8", offset, pluginEnd);
+    console.log("authPluginName: " + authPluginName);
     offset = pluginEnd + 1;
 
     //const salt1 = data.slice(offset, offset + 8);
