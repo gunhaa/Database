@@ -104,7 +104,10 @@ export default class RawMySQLClient implements database {
 
     const scrambled = this.xorBuffers(passwordSha1, passwordSha3);
 
-    const payload = Buffer.concat([Buffer.from([scrambled.length]), scrambled]);
+    // mysql은 length를 요구하지않음
+    //const payload = Buffer.concat([Buffer.from([scrambled.length]), scrambled]);
+
+    const payload = scrambled;
 
     const header = Buffer.alloc(4);
     // 0,1,2 length

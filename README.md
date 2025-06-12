@@ -25,7 +25,7 @@ Parsed Handshake:
 parseAuthSwitch의 Data:  <Buffer 2c 00 00 02 fe 63 61 63 68 69 6e 67 5f 73 68 61 32 5f 70 61 73 73 77 6f 72 64 00 5d 2e 75 4d 7f 1e 42 0f 56 6c 16 15 7b 48 18 44 48 2f 4c 05 00>
 현재 offset은 5여야 한다: 5
 salt:  <Buffer 5d 2e 75 4d 7f 1e 42 0f 56 6c 16 15 7b 48 18 44 48 2f 4c 05>
-전송 패킷 2단계 인증 결과 MySQL에 전송:  2100000320dffd71e045e35f0cf0f928fc037be9667cf38f77caa0541997fa39bcdac77aef
+전송 패킷 2단계 인증 결과 MySQL에 전송:  21 00 00 03 20 df fd 71 e0 45 e3 5f 0c f0 f9 28 fc 03 7b e9 66 7c f3 8f 77 ca a0 54 19 97 fa 39 bc da c7 7a ef
 추가 인증 전송 완료
 ```
 
